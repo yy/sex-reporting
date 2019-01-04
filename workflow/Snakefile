@@ -1,0 +1,151 @@
+from itertools import chain
+
+# Raw datasets
+RAW_CONT_DATA = "../data/Country_Region_2.xlsx"
+RAW_PUB_DATA = '../data/genderXgender_v20180710.txt'
+
+# MeSH
+RAW_PAPER_MESH_DATA = '../data/MESH_v20180726.txt'
+RAW_MESH_DATA = '../data/mesh/mtrees{year}.bin'
+MESH_YEARS = list(chain(range(1997, 1999), range(2001, 2019)))
+
+
+# Derived datasets
+CONT_DATA = "../data/country_continent.csv"
+DISEASE_MESH = '../data/disease_mesh.txt'
+FEMALE_FRAC_PER_MESH = '../data/female_frac_per_mesh.csv'
+PAPER_MESH_FEATURE = '../data/paper_mesh_feature.csv'
+
+# For data cleaning
+CONT_SUPP_DATA = "../data/country_continent_added.csv"
+
+# Main datasets
+SINGLE_AUTHOR_DATA = '../data/single_author.csv'
+MULTI_AUTHOR_DATA = '../data/multi_author.csv'
+MULTI_AUTHOR_FINAL_DATA = '../data/multi_author_final.csv'  # covariates
+REG_TABLE = '../data/reg_table.csv'
+
+# Final results
+SR_REG_RESULTS = '../results/SR_{dv}_{sample}.csv'
+SR_DVS = ['sra', 'srb', 'srf', 'srm']
+SAMPLES = ['all', 'br', 'cm', 'he']
+
+JIF_REG_RESULTS = '../results/IF_{sample}_{year}.csv'
+JIF_YEARS = [2008, 2010, 2012, 2014, 2016]
+
+CLEANED_SR_REG_RESULTS = '../results_clean/SR_{dv}_{sample}.csv'
+CLEANED_JIF_REG_RESULTS = '../results_clean/IF_{sample}_{year}.csv'
+
+
+rule all:
+    input:
+        SINGLE_AUTHOR_DATA,
+        expand(CLEANED_SR_REG_RESULTS, dv=SR_DVS, sample=SAMPLES[0]),
+        expand(CLEANED_SR_REG_RESULTS, dv='sra', sample=SAMPLES[1:]),
+        expand(CLEANED_JIF_REG_RESULTS, sample=SAMPLES, year=JIF_YEARS)
+
+rule sr_result_cleaning:
+    input:
+        SR_REG_RESULTS
+    output:
+        CLEANED_SR_REG_RESULTS
+    shell:
+        'python scripts/clean_sr_reg_results.py {input} {output}'
+
+
+rule jif_result_cleaning:
+    input:
+        JIF_REG_RESULTS
+    output:
+        CLEANED_JIF_REG_RESULTS
+    shell:
+        'python scripts/clean_jif_reg_results.py {input} {output}'
+
+rule regression:
+    input:
+        REG_TABLE
+    output:
+        expand(SR_REG_RESULTS, dv=SR_DVS, sample=SAMPLES[0]),
+        expand(SR_REG_RESULTS, dv='sra', sample=SAMPLES[1:]),
+        expand(JIF_REG_RESULTS, sample=SAMPLES, year=JIF_YEARS)
+    shell:
+        'python scripts/run_regression.py {input}'
+
+
+rule country_data_cleaning:
+    input:
+        RAW_CONT_DATA
+    output:
+        CONT_DATA
+    shell:
+        "python scripts/continent_data_cleaning.py {input} {output}"
+
+
+rule main_data_cleaning:
+    input:
+        pub = RAW_PUB_DATA,
+        cont = CONT_DATA,
+        cont_added = CONT_SUPP_DATA
+    output:
+        single = SINGLE_AUTHOR_DATA,
+        multi = MULTI_AUTHOR_DATA
+    shell:
+        'python scripts/main_data_cleaning.py {input.pub} {input.cont} '
+        '{input.cont_added} {output.single} {output.multi}'
+
+
+rule download_mesh:
+    output:
+        expand(RAW_MESH_DATA, year=MESH_YEARS)
+    shell:
+        'python scripts/download_mesh.py'
+
+
+rule disease_mesh:
+    input:
+        expand(RAW_MESH_DATA, year=MESH_YEARS)
+    output:
+        DISEASE_MESH
+    shell:
+        'python scripts/generate_disease_mesh_terms.py {input} {output}'
+
+
+rule cal_female_frac_per_mesh:
+    input:
+        DISEASE_MESH,
+        MULTI_AUTHOR_DATA,
+        RAW_PAPER_MESH_DATA
+    output:
+        FEMALE_FRAC_PER_MESH
+    shell:
+        'python scripts/cal_female_frac_per_mesh.py {input} {output}'
+
+
+rule cal_mesh_female_frac_per_paper:
+    input:
+        DISEASE_MESH,
+        FEMALE_FRAC_PER_MESH,
+        RAW_PAPER_MESH_DATA
+    output:
+        PAPER_MESH_FEATURE
+    shell:
+        'python scripts/cal_mesh_female_frac_per_paper.py {input} {output}'
+
+
+rule multi_author_with_cov:
+    input:
+        MULTI_AUTHOR_DATA,
+        PAPER_MESH_FEATURE
+    output:
+        MULTI_AUTHOR_FINAL_DATA
+    shell:
+        'python scripts/multi_author_data_with_cov.py {input} {output}'
+
+
+rule prepare_reg_table:
+    input:
+        MULTI_AUTHOR_FINAL_DATA
+    output:
+        REG_TABLE
+    shell:
+        'python scripts/prepare_reg_table.py {input} {output}'
