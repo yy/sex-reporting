@@ -15,6 +15,10 @@ statsmodels = "*"
 matplotlib = "*"
 jupyterlab = "*"
 seaborn = "*"
+pyyaml = ">=4.2b1"
 
 [dev-packages]
 neovim = "*"
+
+[pipenv]
+allow_prereleases = true
