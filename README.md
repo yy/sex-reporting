@@ -4,7 +4,7 @@ Contact: YY Ahn (yyahn@iu.edu)
 
 This repository contains the code for:
 
-- C. Sugimoto, Y.-Y. Ahn, E. Smith, B. Macaluso, and V. Lariviére, Factors affecting sex reporting in medical research, Lancet (in press). 
+- C. Sugimoto, Y.-Y. Ahn, E. Smith, B. Macaluso, and V. Lariviére, Factors affecting sex reporting in medical research, Lancet 393, 550 (2019). 
     
 
 BibTeX entry:
