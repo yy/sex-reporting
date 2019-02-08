@@ -12,7 +12,7 @@ BibTeX entry:
 ```
 @article{sugimoto2019sexreporting,
     author = {Cassidy R.~Sugimoto and Yong-Yeol Ahn and Elise Smith and Benoit Macaluso and Vincent Larivi\'ere},
-    title = {Factors affecting sex reporting in medical research},
+    title = {Factors affecting sex-related reporting in medical research: a cross-disciplinary bibliometric analysis},
     journal = {Lancet},
     volume = {393},
     pages = {550--559},
