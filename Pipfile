@@ -16,6 +16,7 @@ matplotlib = "*"
 jupyterlab = "*"
 seaborn = "*"
 pyyaml = ">=4.2b1"
+notebook = ">=5.7.8"
 
 [dev-packages]
 neovim = "*"
